@@ -1,74 +1,102 @@
 #!/bin/bash
-set -e  # কোনো স্টেপ ফেইল করলে স্ক্রিপ্ট থেমে যাবে এবং এরর দেখাবে
+set -e
+
+# Auto-Escalate to Sudo if not root
+if [ "$EUID" -ne 0 ]; then
+  echo -e "\e[1;33m[!] Elevated permissions required. Re-running with sudo...\e[0m"
+  exec sudo bash "$0" "$@"
+fi
 
 # ====================================================================
-# 🎨 কালার কোড
+# 🎨 COLOR PALETTE & STYLES
 # ====================================================================
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
-BOLD='\033[1m'
+RED="\e[1;31m"
+GREEN="\e[1;32m"
+YELLOW="\e[1;33m"
+BLUE="\e[1;34m"
+MAGENTA="\e[1;35m"
+CYAN="\e[1;36m"
+WHITE="\e[1;37m"
+RESET="\e[0m"
+BOLD="\e[1m"
 
 clear
-echo -e "${CYAN}================================================================${NC}"
-echo -e "${GREEN}${BOLD}           🔥 RAFI SERVER AUTO-INSTALLER TOOL 🔥${NC}"
-echo -e "${YELLOW}                 Managed for Railway Cloud${NC}"
-echo -e "${CYAN}================================================================${NC}"
-echo -e "${BOLD}আপনার ক্লাউড সার্ভার সেটআপের জন্য তথ্যগুলো দিন:${NC}\n"
 
 # ====================================================================
-# 📝 ইউজার ইনপুট
+# 🚀 STYLISH TERMINAL BANNER
 # ====================================================================
+echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
+echo -e "${MAGENTA}   ____  __  ______     _____ ______  _    ____________ "
+echo -e "  / __ \/ / / / __ \   / ___// ____/ / |  / / ____/ __ \\"
+echo -e " / /_/ / /_/ / /_/ /   \__ \/ __/   /  | / / __/ / /_/ /"
+echo -e "/ ____/ __  / ____/   ___/ / /___  / /| |/ /___/ _, _/  "
+echo -e "/_/   /_/ /_/_/       /____/_____/ /_/ |_/_____/_/ |_|   ${RESET}"
+echo -e "${YELLOW}══════════════════════════════════════════════════════════════${RESET}"
+echo -e "${GREEN}${BOLD}     ⚡  A U T O - D E P L O Y   W E B   S E R V E R  ⚡${RESET}"
+echo -e "${WHITE}       Dev: ${CYAN}Rafi${WHITE}  |  Version: ${YELLOW}2.0 Pro${WHITE}  |  System: ${GREEN}Active${WHITE}       ${RESET}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
+echo ""
 
+# ====================================================================
+# 📝 USER CONFIGURATION INPUTS
+# ====================================================================
+echo -e "${YELLOW}${BOLD}[*] Please configure your server parameters:${RESET}\n"
+
+# Domain Name
 while [ -z "$MY_DOMAIN" ]; do
-    echo -en "${YELLOW}👉 আপনার ডোমেইন নাম দিন (যেমন: demo.up.railway.app): ${NC}"
+    echo -en "${CYAN}[?] Enter Domain Name ${WHITE}(e.g. site.up.railway.app): ${GREEN}"
     read -r MY_DOMAIN
+    echo -en "${RESET}"
+    # Clean protocols if user adds http/https
+    MY_DOMAIN=$(echo "$MY_DOMAIN" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
     if [ -z "$MY_DOMAIN" ]; then
-        echo -e "${RED}⚠️  ডোমেইন নাম দেওয়া বাধ্যতামূলক!${NC}"
+        echo -e "${RED}[!] Domain cannot be empty!${RESET}"
     fi
 done
 
-echo -en "${YELLOW}👉 সাইটের ফোল্ডার নাম দিন [ডিফল্ট: mango]: ${NC}"
+# Root Directory
+echo -en "${CYAN}[?] Enter Site Folder Name ${WHITE}[Default: mango]: ${GREEN}"
 read -r MY_FOLDER
+echo -en "${RESET}"
 MY_FOLDER=${MY_FOLDER:-mango}
 
-echo -en "${YELLOW}👉 ডাটাবেজ ইউজারনেম দিন [ডিফল্ট: admin]: ${NC}"
+# Database Username
+echo -en "${CYAN}[?] Enter Database Username ${WHITE}[Default: admin]: ${GREEN}"
 read -r DB_USER
+echo -en "${RESET}"
 DB_USER=${DB_USER:-admin}
 
+# Database Password
 while [ -z "$DB_PASS" ]; do
-    echo -en "${YELLOW}👉 ডাটাবেজ পাসওয়ার্ড দিন: ${NC}"
+    echo -en "${CYAN}[?] Enter Database Password: ${GREEN}"
     read -r DB_PASS
+    echo -en "${RESET}"
     if [ -z "$DB_PASS" ]; then
-        echo -e "${RED}⚠️  পাসওয়ার্ড খালি রাখা যাবে না!${NC}"
+        echo -e "${RED}[!] Password cannot be empty!${RESET}"
     fi
 done
 
 echo ""
-echo -e "${GREEN}✔ তথ্য সংগ্রহ সম্পন্ন! ইনস্টলেশন শুরু হচ্ছে... (২-৩ মিনিট সময় লাগতে পারে)${NC}"
-echo -e "${CYAN}================================================================${NC}\n"
+echo -e "${GREEN}✔ Credentials Verified. Starting Automated Setup...${RESET}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}\n"
 
 export DEBIAN_FRONTEND=noninteractive
 
 # ====================================================================
-# ⚙️ মূল ইনস্টলেশন স্টেপসমূহ
+# ⚙️ INSTALLATION ENGINE
 # ====================================================================
 
-echo -e "${CYAN}===> [১/৮] প্যাকেজ রিপোজিটরি আপডেট হচ্ছে...${NC}"
-apt-get update
-apt-get install -y lsb-release ca-certificates apt-transport-https curl unzip psmisc mariadb-server
-
-# PHP PPA যোগ করা
+echo -e "${YELLOW}[>] STEP 1/8:${RESET} Updating packages & PHP repository..."
+apt-get update -qq
+apt-get install -y -qq lsb-release ca-certificates apt-transport-https curl unzip psmisc mariadb-server > /dev/null 2>&1
 curl -sSLo /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
-apt-get update
+apt-get update -qq
 
-echo -e "${CYAN}===> [২/৮] Apache ও PHP 8.1 ইনস্টল হচ্ছে...${NC}"
-apt-get install -y apache2 php8.1 libapache2-mod-php8.1 php8.1-mysql php8.1-curl php8.1-gd php8.1-mbstring php8.1-xml php8.1-zip php8.1-bcmath
+echo -e "${YELLOW}[>] STEP 2/8:${RESET} Installing Apache2 & PHP 8.1 Stack..."
+apt-get install -y -qq apache2 php8.1 libapache2-mod-php8.1 php8.1-mysql php8.1-curl php8.1-gd php8.1-mbstring php8.1-xml php8.1-zip php8.1-bcmath > /dev/null 2>&1
 
-echo -e "${CYAN}===> [৩/৮] ionCube Loader সেটআপ হচ্ছে...${NC}"
+echo -e "${YELLOW}[>] STEP 3/8:${RESET} Installing ionCube Loader..."
 cd /tmp
 curl -sSL https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz -o ioncube.tar.gz
 tar -xzf ioncube.tar.gz
@@ -80,24 +108,22 @@ ln -sf /etc/php/8.1/mods-available/ioncube.ini /etc/php/8.1/apache2/conf.d/00-io
 ln -sf /etc/php/8.1/mods-available/ioncube.ini /etc/php/8.1/cli/conf.d/00-ioncube.ini
 phpdismod -v 8.1 opcache 2>/dev/null || true
 
-echo -e "${CYAN}===> [৪/৮] ডাটাবেজ (MariaDB) কনফিগার হচ্ছে...${NC}"
-service mariadb start
+echo -e "${YELLOW}[>] STEP 4/8:${RESET} Setting up MariaDB Server..."
+service mariadb start > /dev/null 2>&1
 mariadb -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
 
-echo -e "${CYAN}===> [৫/৮] phpMyAdmin সেটআপ হচ্ছে...${NC}"
+echo -e "${YELLOW}[>] STEP 5/8:${RESET} Deploying phpMyAdmin Core..."
 mkdir -p /var/www/html/phpmyadmin
 curl -sSL https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz -o /tmp/pma.tar.gz
 tar -xzf /tmp/pma.tar.gz -C /var/www/html/phpmyadmin --strip-components=1
 rm -f /tmp/pma.tar.gz
 
-echo -e "${CYAN}===> [৬/৮] Tiny File Manager ইনস্টল হচ্ছে...${NC}"
+echo -e "${YELLOW}[>] STEP 6/8:${RESET} Setting up Online File Manager..."
 mkdir -p /var/www/html/filemanager
 curl -sSL https://raw.githubusercontent.com/prasathmani/tinyfilemanager/master/tinyfilemanager.php -o /var/www/html/filemanager/index.php
 
-echo -e "${CYAN}===> [৭/৮] Railway পোর্ট ও Apache ভার্চুয়াল হোস্ট কনফিগার হচ্ছে...${NC}"
+echo -e "${YELLOW}[>] STEP 7/8:${RESET} Configuring Apache Routing & VHost..."
 mkdir -p /var/www/html/$MY_FOLDER
-
-# Railway-র পোর্ট হ্যান্ডেল করা
 APP_PORT=${PORT:-80}
 echo "Listen $APP_PORT" > /etc/apache2/ports.conf
 
@@ -142,32 +168,38 @@ cat << EOF > /var/www/html/$MY_FOLDER/index.php
 <?php echo "<h1 style='text-align:center;margin-top:100px;font-family:sans-serif;'>🚀 Server is Live on Port $APP_PORT for $MY_DOMAIN</h1>"; ?>
 EOF
 
-echo -e "${CYAN}===> [৮/৮] পারমিশন ও ব্যাকগ্রাউন্ড সার্ভিস ঠিক করা হচ্ছে...${NC}"
+echo -e "${YELLOW}[>] STEP 8/8:${RESET} Applying Permissions & Launching Engine..."
 chmod -R 775 /var/www/html
 chown -R www-data:www-data /var/www/html
-service mariadb restart
+service mariadb restart > /dev/null 2>&1
 
+# ====================================================================
+# 🎉 FINAL DASHBOARD SUMMARY (CLEAN & PROFESSIONAL)
+# ====================================================================
+clear
+echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║${GREEN}${BOLD}             🎉  DEPLOYMENT SUCCESSFUL  🎉                    ${CYAN}║${RESET}"
+echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
-echo -e "${GREEN}================================================================${NC}"
-echo -e "${GREEN}${BOLD}         🎉 অভিনন্দন! সার্ভার সেটআপ সফল হয়েছে! 🎉${NC}"
-echo -e "${GREEN}================================================================${NC}"
-echo -e "${BOLD}📌 সাইট ও সার্ভারের ডিটেইলস:${NC}"
-echo -e "   🌐 মূল ওয়েবসাইট:    ${CYAN}https://$MY_DOMAIN${NC}"
-echo -e "   📁 ফাইল ডিরেক্টরি:  ${YELLOW}/var/www/html/$MY_FOLDER${NC}"
+echo -e "${BOLD}${WHITE}🌐 WEBSITE DETAILS:${RESET}"
+echo -e "   • Public URL   : ${CYAN}https://$MY_DOMAIN${RESET}"
+echo -e "   • Root Directory: ${YELLOW}/var/www/html/$MY_FOLDER${RESET}"
 echo ""
-echo -e "${BOLD}🗄️ ডাটাবেজ (phpMyAdmin):${NC}"
-echo -e "   🔗 লিঙ্ক:           ${CYAN}https://$MY_DOMAIN/phpmyadmin${NC}"
-echo -e "   👤 ইউজার:           ${YELLOW}$DB_USER${NC}"
-echo -e "   🔑 পাসওয়ার্ড:       ${YELLOW}$DB_PASS${NC}"
+echo -e "${BOLD}${WHITE}🗄️ DATABASE (phpMyAdmin):${RESET}"
+echo -e "   • Login URL    : ${CYAN}https://$MY_DOMAIN/phpmyadmin${RESET}"
+echo -e "   • User         : ${YELLOW}$DB_USER${RESET}"
+echo -e "   • Password     : ${YELLOW}$DB_PASS${RESET}"
 echo ""
-echo -e "${BOLD}📂 অনলাইন ফাইল ম্যানেজার (TinyFileManager):${NC}"
-echo -e "   🔗 লিঙ্ক:           ${CYAN}https://$MY_DOMAIN/filemanager${NC}"
-echo -e "   👤 ডিফল্ট ইউজার:    ${YELLOW}admin${NC}"
-echo -e "   🔑 ডিফল্ট পাসওয়ার্ড: ${YELLOW}admin@123${NC}"
-echo -e "${GREEN}================================================================${NC}"
-echo -e "${YELLOW}সার্ভার লাইভ রাখা হচ্ছে... (দয়া করে এই টার্মিনালটি বন্ধ করবেন না)${NC}"
-echo -e "${GREEN}================================================================${NC}\n"
+echo -e "${BOLD}${WHITE}📁 FILE MANAGER (TinyFileManager):${RESET}"
+echo -e "   • Access URL   : ${CYAN}https://$MY_DOMAIN/filemanager${RESET}"
+echo -e "   • Default User : ${YELLOW}admin${RESET}"
+echo -e "   • Default Pass : ${YELLOW}admin@123${RESET}"
+echo ""
+echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
+echo -e "${GREEN}[✔] Engine is LIVE and Running in Foreground.${RESET}"
+echo -e "${YELLOW}[!] Keep this terminal open to maintain uptime.${RESET}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}\n"
 
-# কন্টেইনার যেন বন্ধ না হয়ে যায়, Apache কে এক্টিভ ধরে রাখা
+# Run Apache in foreground
 rm -f /var/run/apache2/apache2.pid
 exec apache2ctl -D FOREGROUND
