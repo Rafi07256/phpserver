@@ -23,16 +23,17 @@ BOLD="\e[1m"
 clear
 
 # ====================================================================
-# 🚀 STYLISH TERMINAL BANNER
+# 🚀 STYLISH TERMINAL BANNER (RRHOST - BLOCK/BOLD STYLE)
 # ====================================================================
 echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
-echo -e "${MAGENTA}   ____  __  ______     _____ ______  _    ____________ "
-echo -e "  / __ \/ / / / __ \   / ___// ____/ / |  / / ____/ __ \\"
-echo -e " / /_/ / /_/ / /_/ /   \__ \/ __/   /  | / / __/ / /_/ /"
-echo -e "/ ____/ __  / ____/   ___/ / /___  / /| |/ /___/ _, _/  "
-echo -e "/_/   /_/ /_/_/       /____/_____/ /_/ |_/_____/_/ |_|   ${RESET}"
+echo -e "${MAGENTA}██████╗ ██████╗ ██╗  ██╗ ██████╗ ███████╗████████╗"
+echo -e "██╔══██╗██╔══██╗██║  ██║██╔═══██╗██╔════╝╚══██╔══╝"
+echo -e "██████╔╝██████╔╝███████║██║   ██║███████╗   ██║   "
+echo -e "██╔══██╗██╔══██╗██╔══██║██║   ██║╚════██║   ██║   "
+echo -e "██║  ██║██║  ██║██║  ██║╚██████╔╝███████║   ██║   "
+echo -e "╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ${RESET}"
 echo -e "${YELLOW}══════════════════════════════════════════════════════════════${RESET}"
-echo -e "${GREEN}${BOLD}     ⚡  A U T O - D E P L O Y   W E B   S E R V E R  ⚡${RESET}"
+echo -e "${GREEN}${BOLD}       ⚡  R R H O S T   C L O U D   D E P L O Y E R  ⚡${RESET}"
 echo -e "${WHITE}       Dev: ${CYAN}Rafi${WHITE}  |  Version: ${YELLOW}2.0 Pro${WHITE}  |  System: ${GREEN}Active${WHITE}       ${RESET}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
 echo ""
@@ -47,7 +48,6 @@ while [ -z "$MY_DOMAIN" ]; do
     echo -en "${CYAN}[?] Enter Domain Name ${WHITE}(e.g. site.up.railway.app): ${GREEN}"
     read -r MY_DOMAIN
     echo -en "${RESET}"
-    # Clean protocols if user adds http/https
     MY_DOMAIN=$(echo "$MY_DOMAIN" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
     if [ -z "$MY_DOMAIN" ]; then
         echo -e "${RED}[!] Domain cannot be empty!${RESET}"
@@ -182,21 +182,21 @@ echo -e "${CYAN}║${GREEN}${BOLD}             🎉  DEPLOYMENT SUCCESSFUL  🎉
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${BOLD}${WHITE}🌐 WEBSITE DETAILS:${RESET}"
-echo -e "   • Public URL   : ${CYAN}https://$MY_DOMAIN${RESET}"
+echo -e "   • Public URL    : ${CYAN}https://$MY_DOMAIN${RESET}"
 echo -e "   • Root Directory: ${YELLOW}/var/www/html/$MY_FOLDER${RESET}"
 echo ""
 echo -e "${BOLD}${WHITE}🗄️ DATABASE (phpMyAdmin):${RESET}"
-echo -e "   • Login URL    : ${CYAN}https://$MY_DOMAIN/phpmyadmin${RESET}"
-echo -e "   • User         : ${YELLOW}$DB_USER${RESET}"
-echo -e "   • Password     : ${YELLOW}$DB_PASS${RESET}"
+echo -e "   • Login URL     : ${CYAN}https://$MY_DOMAIN/phpmyadmin${RESET}"
+echo -e "   • User          : ${YELLOW}$DB_USER${RESET}"
+echo -e "   • Password      : ${YELLOW}$DB_PASS${RESET}"
 echo ""
 echo -e "${BOLD}${WHITE}📁 FILE MANAGER (TinyFileManager):${RESET}"
-echo -e "   • Access URL   : ${CYAN}https://$MY_DOMAIN/filemanager${RESET}"
-echo -e "   • Default User : ${YELLOW}admin${RESET}"
-echo -e "   • Default Pass : ${YELLOW}admin@123${RESET}"
+echo -e "   • Access URL    : ${CYAN}https://$MY_DOMAIN/filemanager${RESET}"
+echo -e "   • Default User  : ${YELLOW}admin${RESET}"
+echo -e "   • Default Pass  : ${YELLOW}admin@123${RESET}"
 echo ""
 echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}"
-echo -e "${GREEN}[✔] Engine is LIVE and Running in Foreground.${RESET}"
+echo -e "${GREEN}[✔] RRHOST Engine is LIVE and Running in Foreground.${RESET}"
 echo -e "${YELLOW}[!] Keep this terminal open to maintain uptime.${RESET}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════${RESET}\n"
 
